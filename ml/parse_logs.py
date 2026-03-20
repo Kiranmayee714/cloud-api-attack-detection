@@ -1,7 +1,10 @@
 import pandas as pd
 import re
 
-log_file = r"C:\Users\user\Cloud_API_Attack_Detection\data\access.log"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+log_file = BASE_DIR / "data" / "access.log"
 
 data = []
 

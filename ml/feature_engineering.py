@@ -1,6 +1,9 @@
 import pandas as pd
 
-df = pd.read_csv(r"C:\Users\user\Cloud_API_Attack_Detection\data\api_logs.csv")
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+df = pd.read_csv(BASE_DIR / "data" / "api_logs.csv")
 
 # failed request feature
 df["failed_request"] = df["status"].apply(lambda x: 1 if x >= 400 else 0)
