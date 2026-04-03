@@ -1,40 +1,36 @@
 import streamlit as st
 import pandas as pd
-import os
+import requests
 
-st.set_page_config(
-    page_title="Cloud API Attack Detection Dashboard",
-    layout="wide"
-)
+st.set_page_config(page_title="Cloud API Attack Detection Dashboard", layout="wide")
 
 st.title("Cloud API Attack Detection System")
 st.subheader("Real-Time Security Monitoring Dashboard")
 
-REQUESTS_FILE = "data/live_requests.csv"
-FEATURES_FILE = "data/live_features.csv"
-PREDICTIONS_FILE = "data/live_predictions.csv"
-ALERTS_FILE = "data/alerts.csv"
-BLOCKED_IPS_FILE = "data/blocked_ips.csv"
+BASE_URL = "https://cloud-api-attack-detection.onrender.com"
 
 
-def load_csv(file_path):
-    if os.path.exists(file_path):
-        try:
-            return pd.read_csv(file_path)
-        except Exception as e:
-            st.warning(f"Could not read {file_path}: {e}")
+def fetch_data(endpoint, key):
+    try:
+        response = requests.get(f"{BASE_URL}{endpoint}", timeout=20)
+        if response.status_code == 200:
+            data = response.json()
+            return pd.DataFrame(data.get(key, []))
+        else:
+            st.warning(f"Failed to fetch {endpoint}: {response.status_code}")
             return pd.DataFrame()
-    return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error fetching {endpoint}: {e}")
+        return pd.DataFrame()
 
 
-requests_df = load_csv(REQUESTS_FILE)
-features_df = load_csv(FEATURES_FILE)
-predictions_df = load_csv(PREDICTIONS_FILE)
-alerts_df = load_csv(ALERTS_FILE)
-blocked_df = load_csv(BLOCKED_IPS_FILE)
+logs_df = fetch_data("/logs", "logs")
+predictions_df = fetch_data("/predictions", "predictions")
+alerts_df = fetch_data("/alerts", "alerts")
+blocked_df = fetch_data("/blocked-ips", "blocked_ips")
 
-total_requests = len(requests_df) if not requests_df.empty else 0
-unique_ips = requests_df["client_ip"].nunique() if not requests_df.empty and "client_ip" in requests_df.columns else 0
+total_requests = len(logs_df) if not logs_df.empty else 0
+unique_ips = logs_df["client_ip"].nunique() if not logs_df.empty and "client_ip" in logs_df.columns else 0
 suspicious_count = 0
 blocked_count = 0
 
@@ -53,17 +49,11 @@ col4.metric("Blocked IPs", blocked_count)
 
 st.divider()
 
-if not requests_df.empty:
+if not logs_df.empty:
     st.subheader("Live Request Logs")
-    st.dataframe(requests_df, use_container_width=True)
+    st.dataframe(logs_df, use_container_width=True)
 else:
     st.info("No request logs available yet.")
-
-if not features_df.empty:
-    st.subheader("Extracted Features")
-    st.dataframe(features_df, use_container_width=True)
-else:
-    st.info("No extracted features available yet.")
 
 if not predictions_df.empty:
     st.subheader("Latest Predictions")
@@ -85,14 +75,14 @@ else:
 
 st.divider()
 
-if not requests_df.empty and "endpoint" in requests_df.columns:
+if not logs_df.empty and "endpoint" in logs_df.columns:
     st.subheader("Endpoint Access Count")
-    endpoint_counts = requests_df["endpoint"].value_counts().reset_index()
+    endpoint_counts = logs_df["endpoint"].value_counts().reset_index()
     endpoint_counts.columns = ["endpoint", "count"]
     st.bar_chart(endpoint_counts.set_index("endpoint"))
 
-if not requests_df.empty and "client_ip" in requests_df.columns:
+if not logs_df.empty and "client_ip" in logs_df.columns:
     st.subheader("Requests Per IP")
-    ip_counts = requests_df["client_ip"].value_counts().reset_index()
+    ip_counts = logs_df["client_ip"].value_counts().reset_index()
     ip_counts.columns = ["client_ip", "count"]
     st.bar_chart(ip_counts.set_index("client_ip"))
