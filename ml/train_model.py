@@ -1,41 +1,84 @@
+import os
 import pandas as pd
 import joblib
+import numpy as np
 from sklearn.ensemble import IsolationForest
 
-# load feature dataset
-df = pd.read_csv("data/api_features.csv")
+INPUT_FILE = "data/api_features_v2.csv"
+MODEL_FILE = "model/api_attack_model.pkl"
 
-# remove IP column (not useful for ML)
-X = df.drop("ip", axis=1)
+def train_model():
+    if not os.path.exists(INPUT_FILE):
+        print(f"Training file not found: {INPUT_FILE}")
+        return
 
-# create model
-model = IsolationForest(
-    n_estimators=100,
-    contamination=0.05,
-    random_state=42
-)
+    df = pd.read_csv(INPUT_FILE)
 
-# train model
-model.fit(X)
+    if df.empty:
+        print("Training dataset is empty.")
+        return
 
-# save model
-joblib.dump(model, "model/api_attack_model.pkl")
+    expected_columns = [
+        "client_ip",
+        "requests_per_ip",
+        "failed_requests",
+        "unique_endpoints",
+        "avg_bytes",
+        "avg_response_time",
+        "admin_access_count",
+        "failure_rate",
+        "request_rate_per_min"
+    ]
 
-print("Model trained successfully!")
+    missing = [col for col in expected_columns if col not in df.columns]
+    if missing:
+        print(f"Missing columns in training file: {missing}")
+        return
 
-# test predictions
-predictions = model.predict(X)
+    X = df[
+        [
+            "requests_per_ip",
+            "failed_requests",
+            "unique_endpoints",
+            "avg_bytes",
+            "avg_response_time",
+            "admin_access_count",
+            "failure_rate",
+            "request_rate_per_min"
+        ]
+    ].copy()
 
-df["anomaly"] = predictions
+    for col in X.columns:
+        X[col] = pd.to_numeric(X[col], errors="coerce")
 
-print("\nPrediction sample:")
-print(df.head())
+    X = X.fillna(0)
 
-import numpy as np
+    model = IsolationForest(
+        n_estimators=100,
+        contamination=0.05,
+        random_state=42
+    )
 
-anomaly_count = np.sum(predictions == -1)
-normal_count = np.sum(predictions == 1)
+    model.fit(X)
 
-print("\nModel Evaluation:")
-print("Normal behaviour detected:", normal_count)
-print("Suspicious behaviour detected:", anomaly_count)
+    os.makedirs("model", exist_ok=True)
+    joblib.dump(model, MODEL_FILE)
+
+    print("Model trained successfully!")
+    print(f"Model saved to: {MODEL_FILE}")
+
+    predictions = model.predict(X)
+    df["anomaly"] = predictions
+
+    print("\nPrediction sample:")
+    print(df.head())
+
+    anomaly_count = np.sum(predictions == -1)
+    normal_count = np.sum(predictions == 1)
+
+    print("\nModel Evaluation:")
+    print("Normal behaviour detected:", normal_count)
+    print("Suspicious behaviour detected:", anomaly_count)
+
+if __name__ == "__main__":
+    train_model()

@@ -1,0 +1,5 @@
+alert_time,client_ip,requests_per_ip,failed_requests,unique_endpoints,avg_bytes,prediction,label,anomaly_score,alert_message,action
+2026-04-03 23:36:13,127.0.0.1,32,1,8,0.0,-1,Suspicious,-0.0042,Suspicious activity detected from IP 127.0.0.1,BLOCK_SIMULATED
+2026-04-03 23:43:14,127.0.0.1,32,1,8,0.0,-1,Suspicious,-0.0042,Suspicious activity detected from IP 127.0.0.1,BLOCK_SIMULATED
+2026-04-03 23:49:53,127.0.0.1,32,1,8,0.0,-1,Suspicious,-0.0042,Suspicious activity detected from IP 127.0.0.1,BLOCK_SIMULATED
+2026-04-04 00:34:14,127.0.0.1,39,0,4,0.0,-1,Suspicious,-0.1562,Suspicious activity detected from IP 127.0.0.1,BLOCK_SIMULATED

@@ -1,35 +1,42 @@
 import pandas as pd
+import os
 
-from pathlib import Path
+INPUT_FILE = "data/requests.csv"   # change if needed
+OUTPUT_FILE = "data/training_features_v2.csv"
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-df = pd.read_csv(BASE_DIR / "data" / "api_logs.csv")
+def build_training_features():
+    df = pd.read_csv(INPUT_FILE)
 
-# failed request feature
-df["failed_request"] = df["status"].apply(lambda x: 1 if x >= 400 else 0)
+    # If your file already aggregated (like yours)
+    if "client_ip" not in df.columns:
+        df.columns = [
+            "client_ip",
+            "requests_per_ip",
+            "failed_requests",
+            "unique_endpoints",
+            "avg_bytes"
+        ]
 
-# requests per IP
-requests_per_ip = df.groupby("ip").size().rename("requests_per_ip")
+        # Add missing columns with simulated values (important)
+        df["avg_response_time"] = df["avg_bytes"] / 10000
+        df["admin_access_count"] = (df["unique_endpoints"] * 0.2).astype(int)
 
-# failed requests per IP
-failed_per_ip = df.groupby("ip")["failed_request"].sum().rename("failed_requests")
+        df["failure_rate"] = (
+            df["failed_requests"] / df["requests_per_ip"]
+        ).fillna(0)
 
-# unique endpoints accessed
-endpoint_per_ip = df.groupby("ip")["endpoint"].nunique().rename("unique_endpoints")
+        df["request_rate_per_min"] = df["requests_per_ip"] / 5
 
-# average payload size
-avg_payload = df.groupby("ip")["bytes"].mean().rename("avg_bytes")
+        df = df.fillna(0)
 
-# combine features
-features = pd.concat(
-    [requests_per_ip, failed_per_ip, endpoint_per_ip, avg_payload],
-    axis=1
-)
+    else:
+        print("Already structured dataset")
 
-features.reset_index(inplace=True)
+    df.to_csv(OUTPUT_FILE, index=False)
 
-print(features.head())
+    print("✅ Training features ready")
+    print(df.head())
 
-features.to_csv(r"C:\Users\user\Cloud_API_Attack_Detection\data\api_features.csv", index=False)
 
-print("\nFeature dataset created!")
+if __name__ == "__main__":
+    build_training_features()
