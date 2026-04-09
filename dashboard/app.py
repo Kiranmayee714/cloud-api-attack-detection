@@ -10,9 +10,10 @@ st.subheader("Real-Time Security Monitoring Dashboard")
 BASE_URL = "https://cloud-api-attack-detection.onrender.com"
 
 
+@st.cache_data(ttl=10)
 def fetch_data(endpoint, key):
     try:
-        response = requests.get(f"{BASE_URL}{endpoint}", timeout=20)
+        response = requests.get(f"{BASE_URL}{endpoint}", timeout=5)
         if response.status_code == 200:
             data = response.json()
             return pd.DataFrame(data.get(key, []))
