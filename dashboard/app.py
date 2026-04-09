@@ -10,18 +10,15 @@ st.subheader("Real-Time Security Monitoring Dashboard")
 BASE_URL = "https://cloud-api-attack-detection.onrender.com"
 
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=15)
 def fetch_data(endpoint, key):
     try:
-        response = requests.get(f"{BASE_URL}{endpoint}", timeout=5)
+        response = requests.get(f"{BASE_URL}{endpoint}", timeout=15)
         if response.status_code == 200:
             data = response.json()
             return pd.DataFrame(data.get(key, []))
-        else:
-            st.warning(f"Failed to fetch {endpoint}: {response.status_code}")
-            return pd.DataFrame()
-    except Exception as e:
-        st.error(f"Error fetching {endpoint}: {e}")
+        return pd.DataFrame()
+    except Exception:
         return pd.DataFrame()
 
 
@@ -32,17 +29,10 @@ blocked_df = fetch_data("/blocked-ips", "blocked_ips")
 
 total_requests = len(logs_df) if not logs_df.empty else 0
 unique_ips = logs_df["client_ip"].nunique() if not logs_df.empty and "client_ip" in logs_df.columns else 0
-suspicious_count = 0
-blocked_count = 0
-
-if not predictions_df.empty and "label" in predictions_df.columns:
-    suspicious_count = (predictions_df["label"] == "Suspicious").sum()
-
-if not blocked_df.empty and "client_ip" in blocked_df.columns:
-    blocked_count = blocked_df["client_ip"].nunique()
+suspicious_count = (predictions_df["label"] == "Suspicious").sum() if not predictions_df.empty and "label" in predictions_df.columns else 0
+blocked_count = blocked_df["client_ip"].nunique() if not blocked_df.empty and "client_ip" in blocked_df.columns else 0
 
 col1, col2, col3, col4 = st.columns(4)
-
 col1.metric("Total Requests", total_requests)
 col2.metric("Unique IPs", unique_ips)
 col3.metric("Suspicious IPs", suspicious_count)
