@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from api.alerting import send_alert_email
 import time
 import csv
 import os
@@ -8,6 +7,9 @@ import sys
 import subprocess
 from datetime import datetime
 import pandas as pd
+from api.kafka_producer import send_event
+
+from api.stream import request_queue
 
 app = FastAPI(title="Cloud API Attack Detection System")
 
@@ -74,8 +76,10 @@ def is_ip_blocked(client_ip: str) -> bool:
         blocked_df = pd.read_csv(BLOCKED_IPS_FILE)
         if blocked_df.empty or "client_ip" not in blocked_df.columns:
             return False
+
         blocked_ips = blocked_df["client_ip"].astype(str).tolist()
         return client_ip in blocked_ips
+
     except Exception:
         return False
 
@@ -137,9 +141,11 @@ async def security_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         status_code = response.status_code
+
     except Exception:
         status_code = 500
         raise
+
     finally:
         process_time = round((time.time() - start_time) * 1000, 2)
         method = request.method
@@ -147,6 +153,18 @@ async def security_middleware(request: Request, call_next):
         user_agent = request.headers.get("user-agent", "unknown")
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        request_data = {
+            "timestamp": timestamp,
+            "client_ip": client_ip,
+            "method": method,
+            "endpoint": endpoint,
+            "status_code": status_code,
+            "response_time_ms": process_time,
+            "payload_size": payload_size,
+            "user_agent": user_agent
+        }
+
+        # CSV logging
         with open(LOG_FILE, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow([
@@ -160,9 +178,15 @@ async def security_middleware(request: Request, call_next):
                 user_agent
             ])
 
-        # IMPORTANT: do NOT run pipeline for dashboard/API read routes
-        if client_ip != "127.0.0.1" and endpoint not in excluded_paths:
-            trigger_pipeline()
+        # Kafka-like streaming queue
+        # REAL KAFKA STREAMING
+        if endpoint not in excluded_paths:
+            send_event(request_data)
+            print("KAFKA PRODUCER:", request_data)
+
+        # Run ML pipeline only for real API routes
+        if endpoint not in excluded_paths:
+           trigger_pipeline()
 
     return response
 
