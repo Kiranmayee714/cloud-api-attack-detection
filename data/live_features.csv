@@ -1,2 +1,0 @@
-client_ip,requests_per_ip,failed_requests,unique_endpoints,avg_bytes,avg_response_time,admin_access_count,failure_rate,request_rate_per_min
-127.0.0.1,39,0,4,0.0,1.38,9,0.0,6.94

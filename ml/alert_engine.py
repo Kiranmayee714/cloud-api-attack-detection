@@ -2,9 +2,12 @@ import pandas as pd
 import os
 from datetime import datetime
 
+from api.alerting import send_alert_email
+
 PREDICTIONS_FILE = "data/live_predictions.csv"
 ALERTS_FILE = "data/alerts.csv"
 BLOCKED_IPS_FILE = "data/blocked_ips.csv"
+
 
 def process_alerts():
     if not os.path.exists(PREDICTIONS_FILE):
@@ -63,11 +66,29 @@ def process_alerts():
 
     blocked_ips.to_csv(BLOCKED_IPS_FILE, index=False)
 
+    # Send email alerts for suspicious rows
+    for _, row in suspicious_df.iterrows():
+        subject = "API Attack Alert Detected"
+        body = (
+            f"Suspicious API activity detected.\n\n"
+            f"Time: {row['alert_time']}\n"
+            f"Client IP: {row['client_ip']}\n"
+            f"Requests per IP: {row['requests_per_ip']}\n"
+            f"Failed Requests: {row['failed_requests']}\n"
+            f"Unique Endpoints: {row['unique_endpoints']}\n"
+            f"Average Bytes: {row['avg_bytes']}\n"
+            f"Prediction: {row['prediction']}\n"
+            f"Label: {row['label']}\n"
+            f"Anomaly Score: {row['anomaly_score']}\n"
+            f"Action: BLOCK_SIMULATED\n"
+        )
+        send_alert_email(subject, body)
+
     print("Alert generated successfully.")
     print(alerts_to_save.tail())
     print("\nBlocked IPs:")
     print(blocked_ips)
 
+
 if __name__ == "__main__":
     process_alerts()
-    

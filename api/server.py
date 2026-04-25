@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from api.alerting import send_alert_email
 import time
 import csv
 import os

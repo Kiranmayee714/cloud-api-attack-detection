@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
+venv/
+
+# Data (runtime generated)
+data/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
