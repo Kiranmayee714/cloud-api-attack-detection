@@ -7,9 +7,7 @@ import sys
 import subprocess
 from datetime import datetime
 import pandas as pd
-from api.kafka_producer import send_event
-
-from api.stream import request_queue
+import threading
 
 app = FastAPI(title="Cloud API Attack Detection System")
 
@@ -93,13 +91,20 @@ def trigger_pipeline():
 
     for script in scripts:
         try:
-            subprocess.run(
+            result = subprocess.run(
                 [sys.executable, script],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=20
             )
+
+            if result.stdout:
+                print(result.stdout)
+
+            if result.stderr:
+                print(result.stderr)
+
         except Exception as e:
             print(f"Error running {script}: {e}")
 
@@ -164,7 +169,6 @@ async def security_middleware(request: Request, call_next):
             "user_agent": user_agent
         }
 
-        # CSV logging
         with open(LOG_FILE, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow([
@@ -178,15 +182,12 @@ async def security_middleware(request: Request, call_next):
                 user_agent
             ])
 
-        # Kafka-like streaming queue
-        # REAL KAFKA STREAMING
-        if endpoint not in excluded_paths:
-            send_event(request_data)
-            print("KAFKA PRODUCER:", request_data)
+        print("REQUEST LOGGED:", request_data)
 
-        # Run ML pipeline only for real API routes
+
         if endpoint not in excluded_paths:
-           trigger_pipeline()
+           threading.Thread(target=trigger_pipeline).start()
+
 
     return response
 
