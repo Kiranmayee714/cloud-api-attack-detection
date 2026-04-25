@@ -1,159 +1,249 @@
-# Cloud API Attack Detection System
+# 🚀 Cloud API Attack Detection System
 
-## Project Overview
-
-The **Cloud API Attack Detection System** is a real-time intelligent security solution designed to monitor API traffic, detect suspicious behavior using Machine Learning, generate alerts, simulate blocking, and visualize system activity through a dashboard.
-
-Unlike static log analysis projects, this system works on **live API requests** and performs a complete end-to-end detection pipeline.
+A real-time API monitoring and anomaly detection system that identifies suspicious behavior in API traffic using Machine Learning, generates alerts, and notifies administrators via email.
 
 ---
 
-## Objective
+## 📌 Overview
 
-The main goal of this project is to build a live API security monitoring system that can:
+Modern applications rely heavily on APIs, making them a major attack surface. This project implements a **real-time API attack detection pipeline** that:
 
-- Monitor incoming API traffic
-- Log request behavior automatically
-- Extract security-relevant features
-- Detect anomalies using an ML model
-- Generate alerts for suspicious activity
-- Simulate blocking of malicious IP addresses
-- Display results through a Streamlit dashboard
-
----
-
-## Problem Statement
-
-Modern APIs are often exposed to abnormal traffic patterns such as:
-
-- brute force attempts
-- endpoint probing
-- scraping
-- unusual request bursts
-- suspicious access behavior
-
-Traditional dashboards only visualize logs after the fact.  
-This project focuses on **real-time detection and response** using a machine learning-based anomaly detection pipeline.
+* Monitors live API requests
+* Extracts behavioral features
+* Detects anomalies using Machine Learning
+* Generates alerts and simulates IP blocking
+* Sends email notifications to administrators
+* Visualizes activity through a dashboard
 
 ---
 
-## Key Features
+## ⚙️ Features
 
-- Real-time API traffic monitoring
-- Automatic request logging using FastAPI middleware
-- Feature extraction from live request logs
-- Machine learning-based anomaly detection using Isolation Forest
-- Alert generation for suspicious IPs
-- Simulated IP blocking mechanism
-- Interactive Streamlit dashboard for monitoring
-
----
-
-## Tech Stack
-
-- **Backend:** FastAPI
-- **Dashboard:** Streamlit
-- **Machine Learning:** Scikit-learn (Isolation Forest)
-- **Language:** Python
-- **Data Processing:** Pandas
-- **Model Storage:** Joblib
+* 🔍 **Real-time API request monitoring**
+* 📊 **Feature extraction from API traffic**
+* 🤖 **Anomaly detection using Isolation Forest**
+* 🚨 **Automatic alert generation**
+* 📩 **Email notifications for suspicious activity**
+* ⛔ **Simulated IP blocking**
+* 📈 **Streamlit dashboard for visualization**
+* 🐳 **Dockerized deployment**
 
 ---
 
-## Project Structure
+## 🏗️ System Architecture
+
+```text
+User Request
+   │
+   ▼
+FastAPI Backend (API Endpoints)
+   │
+   ▼
+Request Logging Middleware
+   │
+   ▼
+Live Data Storage (CSV)
+   │
+   ▼
+Feature Engineering (Per IP)
+   │
+   ▼
+ML Model (Isolation Forest)
+   │
+   ▼
+Prediction (Normal / Suspicious)
+   │
+   ▼
+Alert Engine
+   │
+   ├── Alerts Stored
+   ├── Blocked IPs Updated
+   └── Email Notification Sent
+   │
+   ▼
+Dashboard (Streamlit)
+```
+
+---
+
+## 🧠 Machine Learning Model
+
+* Model: **Isolation Forest**
+* Type: Unsupervised anomaly detection
+* Detects unusual patterns in:
+
+  * Requests per IP
+  * Failed requests
+  * Unique endpoints accessed
+  * Payload size behavior
+
+---
+
+## 📂 Project Structure
 
 ```text
 cloud-api-attack-detection/
 │
 ├── api/
-│   └── server.py
-│
-├── dashboard/
-│   └── app.py
-│
-├── data/
-│   ├── live_requests.csv
-│   ├── live_features.csv
-│   ├── live_predictions.csv
-│   ├── alerts.csv
-│   ├── blocked_ips.csv
-│   ├── access.log
-│   ├── api_logs.csv
-│   └── api_features.csv
+│   ├── server.py          # FastAPI application
+│   ├── middleware.py      # Request logging middleware
+│   └── alerting.py        # Email alert system
 │
 ├── ml/
 │   ├── parse_logs.py
 │   ├── feature_engineering.py
-│   ├── train_model.py
 │   ├── realtime_features.py
 │   ├── realtime_predict.py
-│   └── alert_engine.py
+│   ├── alert_engine.py
+│   └── train_model.py
+│
+├── dashboard/
+│   └── app.py             # Streamlit dashboard
 │
 ├── model/
 │   └── api_attack_model.pkl
 │
+├── data/                  # Runtime generated files (ignored in git)
+│
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
 ├── requirements.txt
 └── README.md
+```
 
-System Workflow
-User Request
-→ FastAPI API Endpoint
-→ Middleware Logging
-→ live_requests.csv
-→ Real-Time Feature Extraction
-→ live_features.csv
-→ Isolation Forest Prediction
-→ live_predictions.csv
-→ Alert Generation
-→ alerts.csv
-→ Block Simulation
-→ blocked_ips.csv
-→ Streamlit Dashboard
+---
 
+## 🚀 How to Run Locally
 
-Installation
-1. Clone the repository
-git clone <your-repository-link>
-cd cloud-api-attack-detection
-2. Create virtual environment
-python -m venv venv
-3. Activate environment
-Windows
-venv\Scripts\activate
-Linux/Mac
-source venv/bin/activate
-4. Install dependencies
+### 1️⃣ Install dependencies
+
+```bash
 pip install -r requirements.txt
-Running the Project
-Start FastAPI server
+```
+
+---
+
+### 2️⃣ Run FastAPI server
+
+```bash
 uvicorn api.server:app --reload
+```
 
-FastAPI runs on:
+Open:
 
-http://127.0.0.1:8000
-Start Streamlit dashboard
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+### 3️⃣ Run Dashboard
+
+```bash
 streamlit run dashboard/app.py
-Testing the System
-1. Access API endpoints
+```
 
-Open these in browser or Postman:
+---
 
-http://127.0.0.1:8000/
-http://127.0.0.1:8000/login
-http://127.0.0.1:8000/data
-http://127.0.0.1:8000/admin
-http://127.0.0.1:8000/health
-2. Trigger pipeline
+## 🐳 Run with Docker
 
-For localhost/demo testing:
+### Build image
 
-http://127.0.0.1:8000/test-pipeline
-3. Refresh dashboard
+```bash
+docker build -t api-attack-detection .
+```
 
-Open Streamlit dashboard and refresh to see:
+### Run container
 
-live logs
-extracted features
-predictions
-alerts
-blocked IPs
+```bash
+docker run -p 8000:8000 api-attack-detection
+```
+
+---
+
+## 📩 Email Alert Setup
+
+Create a `.env` file:
+
+```env
+EMAIL_SENDER=yourgmail@gmail.com
+EMAIL_PASSWORD=your_app_password
+EMAIL_RECEIVER=yourgmail@gmail.com
+```
+
+⚠️ Use **Gmail App Password**, not your actual password.
+
+---
+
+## 🔍 How It Works
+
+1. User sends API request
+2. Middleware logs request data
+3. Features are generated per IP
+4. ML model predicts anomaly
+5. If suspicious:
+
+   * Alert is generated
+   * IP is marked as blocked (simulated)
+   * Email notification is sent
+6. Dashboard displays system activity
+
+---
+
+## 📊 Sample Outputs
+
+* Alerts stored in `alerts.csv`
+* Blocked IPs stored in `blocked_ips.csv`
+* Live monitoring via dashboard
+* Email notifications on detection
+
+---
+
+## 🎯 Use Cases
+
+* API security monitoring
+* Intrusion detection systems
+* Cloud-native security pipelines
+* DevOps observability systems
+
+---
+
+## 🛠️ Tech Stack
+
+* **Backend:** FastAPI
+* **ML:** Scikit-learn (Isolation Forest)
+* **Data Processing:** Pandas, NumPy
+* **Visualization:** Streamlit
+* **Deployment:** Docker
+* **Alerts:** SMTP (Email)
+
+---
+
+## 🚀 Future Enhancements
+
+* Real-time streaming (Kafka / Kinesis)
+* Integration with AWS CloudWatch / API Gateway
+* Automated IP blocking at firewall level
+* Advanced models (LSTM / Deep Learning)
+* Authentication & RBAC
+* Alert dashboards with Grafana
+
+---
+
+## 👩‍💻 Author
+
+**Kiranmayee Avula**
+B.Tech CSE | AI & Cloud Enthusiast
+
+---
+
+## ⭐ Project Highlights
+
+* End-to-end ML pipeline
+* Real-time monitoring system
+* Cloud-ready architecture
+* Production-style implementation
+* Strong DevOps + AI integration
+
+---
